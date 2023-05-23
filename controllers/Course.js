@@ -1,6 +1,6 @@
 const Course = require("../models/Course");
 const User = require("../models/User");
-const Tag = require("../models/Tags");
+const Tag = require("../models/Category");
 const { uploadImageToCloudinary } = require("../utils/imageUploader");
 const { findByIdAndUpdate } = require("../models/User");
 
@@ -148,7 +148,7 @@ exports.getCourseDetails = async (req, res) => {
           path: "additionalDetails",
         },
       })
-      .populate("catregory")
+      .populate("category")
       .populate("ratingAnkdReview")
       .populate({
         path: "courseContent",
@@ -158,23 +158,26 @@ exports.getCourseDetails = async (req, res) => {
       })
       .exec();
 
-      //validation
+    //validation
 
-      if(!courseDetials)
-      {
-        return res.status(500).json({
-          success:false,
-          message:`can't fetch course details with ${courseId}`,
-        });
-
-      }
+    if (!courseDetials) {
+      return res.status(500).json({
+        success: false,
+        message: `can't fetch course details with ${courseId}`,
+      });
+    }
     // return response
-     
-    return res.status(200).json({
-      success:true,
-      message:'Course Details Fetched Successfully',
-    });
 
-    
-  } catch (error) {}
+    return res.status(200).json({
+      success: true,
+      message: "Course Details Fetched Successfully",
+      data: courseDetials,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

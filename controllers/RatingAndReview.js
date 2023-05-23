@@ -1,5 +1,6 @@
 const RatingAndReview = require("../models/RatingAndReview");
 const Course = require("../models/Course");
+const { default: mongoose } = require("mongoose");
 
 // createRating
 
@@ -49,19 +50,88 @@ exports.createRating = async (req, res) => {
     );
     //return response
     return res.status(200).json({
-        success:true,
-        message:'Rating and Review created successfully',
-        ratingReview,
-    })
+      success: true,
+      message: "Rating and Review created successfully",
+      ratingReview,
+    });
   } catch (error) {
     console.log(error);
     return res.status(403).json({
-        success:false,
-        message:error.message,
+      success: false,
+      message: error.message,
     });
   }
 };
 
 // getAverageRating
 
-//getAllRating
+exports.getAverageRating = async (req, res) => {
+  try {
+    //get courseId
+    const courseId = req.body.courseId;
+    //calculate avg rating
+    const result = await RatingAndReview.aggregate([
+      {
+        $match: {
+          course: new mongoose.Schema.Types.ObjectId(courseId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "rating" },
+        },
+      },
+    ]);
+    //return response
+    if (result.length > 0) {
+      return res.status(200).json({
+        success: true,
+        averageRating: result[0].averageRating,
+      });
+    }
+
+    // if no review rating exist
+    return res.status(200).json({
+      success: true,
+      message: "Average rating is zero, no rating given till now",
+      averageRating: 0,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(403).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+//get All Rating and reviews
+
+exports.getAllRating = async (req, res) => {
+  try {
+    const allReview = await RatingAndReview.find({})
+      .sort({ rating: "desc" })
+      .populate({
+        path: "user",
+        select: "firstName,lastName,email,image",
+      })
+      .populate({
+        path: "course",
+        select: "courseName",
+      })
+      .exec();
+
+    return res.status(200).json({
+      success: true,
+      message: "All review fetched successfully",
+      data: allReview,
+    });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+        success:false,
+        message:error.message,
+    });
+  }
+};

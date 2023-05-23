@@ -82,43 +82,99 @@ exports.createCourse = async (req, res) => {
     );
 
     // update the tag schema
-    await Tag.findByIdAndUpdate({_id:tagDetails._id},
-        {$push:{courses:newCourse._id}},
-        {new:true});
+    await Tag.findByIdAndUpdate(
+      { _id: tagDetails._id },
+      { $push: { courses: newCourse._id } },
+      { new: true }
+    );
     //return response
 
     return res.status(200).json({
-        success:true,
-        message:"Course created successfully",
+      success: true,
+      message: "Course created successfully",
     });
-
   } catch (error) {
     console.error(error);
     return res.starus(403).json({
-        success:false,
-        message:"Error while creating course",
-        error:error.message,
-    })
+      success: false,
+      message: "Error while creating course",
+      error: error.message,
+    });
   }
 };
 
 //getAllcourse handler function
 
-exports.showAllCourses = async(req,res)=>{
-    try{
-       const allCourse =  await Course.find({},{courseName:true,
-    price:true,thumbnail:true,instructor:true,ratingAndReviews:true,studentsEnrolled:true})
-    .populate("instructor")
-    .exec();
-
-
-    }catch(error){
-        console.error(error);
+exports.showAllCourses = async (req, res) => {
+  try {
+    const allCourse = await Course.find(
+      {},
+      {
+        courseName: true,
+        price: true,
+        thumbnail: true,
+        instructor: true,
+        ratingAndReviews: true,
+        studentsEnrolled: true,
+      }
+    )
+      .populate("instructor")
+      .exec();
+    return res.status(200).json({
+      success: false,
+      message: "Data of all courses are fetched successfully",
+    });
+  } catch (error) {
+    console.error(error);
     return res.starus(403).json({
-        success:false,
-        message:"Cannot find course data",
-        error:error.message,
-    })
+      success: false,
+      message: "Cannot find course data",
+      error: error.message,
+    });
+  }
+};
 
-    }
-}
+// get coursesDetails
+
+exports.getCourseDetails = async (req, res) => {
+  try {
+    //get id
+    const { courseId } = req.body;
+    //find course details
+    const courseDetials = await Course.find({ _id: courseId })
+      .populate({
+        path: "instructor",
+        populate: {
+          path: "additionalDetails",
+        },
+      })
+      .populate("catregory")
+      .populate("ratingAnkdReview")
+      .populate({
+        path: "courseContent",
+        populate: {
+          path: "subSection",
+        },
+      })
+      .exec();
+
+      //validation
+
+      if(!courseDetials)
+      {
+        return res.status(500).json({
+          success:false,
+          message:`can't fetch course details with ${courseId}`,
+        });
+
+      }
+    // return response
+     
+    return res.status(200).json({
+      success:true,
+      message:'Course Details Fetched Successfully',
+    });
+
+    
+  } catch (error) {}
+};

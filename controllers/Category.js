@@ -76,8 +76,10 @@ exports.categoryPageDetails = async (req, res) => {
     .exec();
 
     // get top courses    //HW
+    const topCourse = await Course.findById(courseId)
     const bestSellingCourses = await Course.find
     
+
     //return response
     return res.status(200).json({
        success:true,

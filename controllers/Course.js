@@ -20,7 +20,7 @@ exports.createCourse = async (req, res) => {
       !courseName ||
       !courseDescription ||
       !whatYouWillLearn ||
-      !Price ||
+      !price ||
       !Tag ||
       !thumbnail
     ) {
@@ -57,7 +57,7 @@ exports.createCourse = async (req, res) => {
 
     const thumbnailImage = await uploadImageToCloudinary(
       thumbnail,
-      process.env.FOLDER_NAME
+      process.env.FOLDER_NAME,
     );
 
     // create an entry for new course

@@ -1,21 +1,22 @@
-const { findOne } = require("../models/User");
+
 const User = require("../models/User");
 const mailSender = require("../utils/mailSender");
 const bcrypt = require("bcrypt");
+const crypto = require('crypto');
 
 // resetPassword token
 
-exports.resetPasswordToken = async (res, req) => {
+exports.resetPasswordToken = async (req,res) => {
   try {
     //req ke body se email nikal lo,
-    const email = req.body;
+    const email = req.body.email;
 
     //check user exist for the user ,validation for email,
     const user = await User.findOne({ email: email });
     if (!user) {
       return res.json({
         success: false,
-        message: "your email is not registered with us",
+        message: `your email : ${email} is not registered with us`,
       });
     }
     //generate token,
@@ -26,6 +27,7 @@ exports.resetPasswordToken = async (res, req) => {
       { token: token, resetPasswordExpires: Date.now() + 5 * 60 * 1000 },
       { new: true }
     );
+    console.log(updatedDetails);
     //create url
     const url = `http://localhost:3000/update-password/${token}`;
 
@@ -36,14 +38,14 @@ exports.resetPasswordToken = async (res, req) => {
       `Password Reset Link:${url}`
     );
     //return response
-    return res.json({
+    res.json({
       success: true,
       message:
         "email send successfully, click on the link to to change the password",
     });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
+  } catch(error) {
+    return res.json({
+      error: error.message,
       success: false,
       message: "something went wrong",
     });
@@ -57,24 +59,24 @@ exports.resetPassword = async (req, res) => {
     // data fetch krlo
     const { password, confirmPassword, token } = req.body;
     // validation krlo
-    if (!password !== confirmPassword)
+    if (confirmPassword !== password)
       return res.json({
         success: false,
         message: "password not matched, please reenter",
       });
     // get user details from db using token
-    const userDetails = await findOne({ token: token });
+    const userDetails = await User.findOne({ token: token });
     //if no entry - invalid token
     if (!userDetails)
-      return res.josn({
+      return res.json({
         success: false,
         message: "Token is invalid",
       });
 
     //token time check
 
-    if (userDetails.resetPasswordExpires < Date.now()) {
-      return res.josn({
+    if (!(userDetails.resetPasswordExpires > Date.now())) {
+      return res.status(403).json({
         success: false,
         message: "Token is expired, please regenerate token",
       });

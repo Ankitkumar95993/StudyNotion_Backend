@@ -1,6 +1,7 @@
 const { response } = require("express");
 const Profile = require("../models/Profile");
 const User = require("../models/User");
+const { uploadImageToCloudinary } = require("../utils/imageUploader");
 
 // update profile
 exports.updateProfile = async (req, res) => {
@@ -18,24 +19,26 @@ exports.updateProfile = async (req, res) => {
     }
     //find profile
     const userDetails = await User.findById(id);
-    const profileId = userDetails.additionalDetails;
-    const profileDetails = await Profile.findById(profileId);
+    const profile = await Profile.findById(userDetails.additionalDetails);
+    
 
     //update profile
 
-    profileDetails.dateOfBirth = dateOfBirth;
-    profileDetails.about = about;
-    profileDetails.gender = gender;
-    profileDetails.contactNumber = contactNumber;
-    await profileDetails.save();
+    profile.dateOfBirth = dateOfBirth;
+    profile.about = about;
+    profile.gender = gender;
+    profile.contactNumber = contactNumber;
+
+    await profile.save();
 
     //return response
     return res.status(200).json({
       success: true,
       message: "Profile details uploaded successfully",
-      profileDetails,
+      profile,
     });
-  } catch {
+  } catch(error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "something went wrong, cant update profile",
@@ -58,7 +61,7 @@ exports.deleteAccount = async(req,res) => {
       });
     }
     // delete profile
-    await Profile.findByIdAndDelete({ _id: userDetails.additionalDetails });
+    await Profile.findByIdAndDelete({ _id:userDetails.additionalDetails });
     // delete user
     await User.findByIdAndDelete({ _id: id });
     //HW : how can we schedule so the instantly it should not be deleted
@@ -86,18 +89,20 @@ exports.getAllUsersDetails=async(req,res)=>{
         //get id;
         const id = req.user.id;
         //validation and get user details
-        const userDetails = await User.findById(id).populate("addtionalDetails").exec();
+        const userDetails = await User.findById(id).populate("additionalDetails").exec();
+        console.log(userDetails);
         //return response
         return res.status(200).json({
             success:true,
             message:"User details fetched successfully",
+            data:userDetails,
         });
 
     }
     catch(error){
         return res.status(500).json({
             success:false,
-            message:'Can not fetched user details',
+            message:'error.message',
         });
 
     }
@@ -128,7 +133,7 @@ exports.updateDisplayPicture = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'cant upload to cloudinary',
     })
   }
 };
